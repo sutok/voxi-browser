@@ -8,19 +8,22 @@
 |------|------|
 | 対象ブラウザ | Chrome (Manifest V3) |
 | 推論方式 | オフライン（Transformers.js） |
-| モデル | `Xenova/whisper-base`（`language: 'japanese'`） |
-| 音声ソース | マイク + アクティブタブ音声 |
+| モデル | `onnx-community/whisper-base`（`language: 'japanese'`） |
+| 音声ソース | マイク + アクティブタブ音声（常に両方同時キャプチャ） |
 | 表示 | 拡張ポップアップ内 |
 | 話者区別 | 「自分:」(マイク) / 「タブ:」(タブ音声) で分けて表示 |
 | エクスポート | クリップボードコピー + .txt ダウンロード |
 
 ## 技術スタック
 
-- **Transformers.js** (`@xenova/transformers`) - Whisper ブラウザ内推論
+- **Transformers.js v3** (`@huggingface/transformers`) - Whisper ブラウザ内推論
 - **Chrome Extension APIs** - `tabCapture`, `offscreen`
 - **Web Audio API** - `AudioContext`, `AudioWorklet`
 - **Web Workers** - Whisper 推論をメインスレッドから分離
+- **VAD** (`@ricky0123/vad-web`) - 音声区間検出（Silero VAD ベース）
+- **Tailwind CSS** - UI スタイリング
 - **Vite** - バンドラー（Transformers.js の ESM 対応のため）
+- **Vitest** - テストフレームワーク
 
 ## ディレクトリ構成
 
@@ -43,8 +46,16 @@ voxi-browser/
 │   └── popup/
 │       ├── popup.html          # UI
 │       ├── popup.js            # 表示ロジック・エクスポート
-│       └── popup.css
-└── dist/                       # ビルド成果物（Chrome に読み込む）
+│       └── popup.css           # Tailwind CSS
+├── tests/                        # Vitest テスト
+│   ├── worker/
+│   │   └── whisper-worker.test.js
+│   ├── audio/
+│   │   └── audio-processor.test.js
+│   └── popup/
+│       └── popup.test.js
+├── tailwind.config.js
+└── dist/                         # ビルド成果物（Chrome に読み込む）
 ```
 
 ## アーキテクチャ
@@ -57,7 +68,7 @@ voxi-browser/
                                            ↓
                                     [Whisper Worker]
                                     Transformers.js
-                                    Xenova/whisper-base
+                                    onnx-community/whisper-base
                                     language: 'japanese'
                                            ↓
                                   { source: 'mic'|'tab', text }
@@ -115,7 +126,7 @@ voxi-browser/
 - 推論中の次チャンクはキューイングして取りこぼし防止
 
 ### モデルダウンロード
-- 初回起動時に `Xenova/whisper-base`（約145MB）をダウンロード
+- 初回起動時に `onnx-community/whisper-base`（約145MB）をダウンロード
 - Transformers.js が自動的にブラウザキャッシュに保存
 - ポップアップにダウンロード進捗を表示する
 
@@ -141,6 +152,16 @@ uv pip install   # パッケージインストール
 - `uv init` / `uv venv` で初期化済み
 - Python スクリプト・ツールの実行は必ず仮想環境内で行う
 
+### Node.js（nvm）
+WSL 内に nvm 経由で Node.js をインストール済み。
+
+```bash
+source ~/.nvm/nvm.sh   # nvm を有効化（.bashrc に記載済み）
+node --version         # v22.x
+```
+
+- npm コマンドは **必ず WSL 内で** 実行する（Windows 側の npm は WSL パスで動作しない）
+
 ### JS ビルド
 
 ```bash
@@ -151,10 +172,22 @@ npm run build  # dist/ に本番ビルド
 
 Chrome で `dist/` フォルダを「パッケージ化されていない拡張機能」として読み込む。
 
+### テスト
+
+```bash
+npm run test       # Vitest 実行
+npm run test:watch # ウォッチモード
+```
+
+- テストフレームワーク: **Vitest**
+- Chrome Extension API / Web Audio API はモックして単体テスト
+- 新機能追加時は対応するテストも必ず書く
+
 ## Claude への指示
 
 - **対話は必ず日本語で行う**
 - Python 環境は `uv` を使用する（`pip` 直接使用禁止）
+- npm/node コマンドは WSL 内で `source ~/.nvm/nvm.sh` してから実行する
 
 ## 参考実装
 

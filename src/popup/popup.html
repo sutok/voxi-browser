@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voxi Browser</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body class="w-[400px] min-h-[500px] bg-gray-900 text-gray-100">
+  <div class="p-4 flex flex-col h-full">
+    <!-- ヘッダー -->
+    <header class="flex items-center justify-between mb-4">
+      <h1 class="text-lg font-bold text-white">Voxi Browser</h1>
+      <span id="status-badge" class="text-xs px-2 py-1 rounded-full bg-gray-700 text-gray-400">
+        停止中
+      </span>
+    </header>
+
+    <!-- モデルロード進捗 -->
+    <div id="loading-section" class="hidden mb-4">
+      <div class="text-sm text-gray-400 mb-1">モデル読み込み中...</div>
+      <div class="w-full bg-gray-700 rounded-full h-2">
+        <div id="loading-bar" class="bg-blue-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+      </div>
+      <div id="loading-text" class="text-xs text-gray-500 mt-1">0%</div>
+    </div>
+
+    <!-- 制御ボタン -->
+    <div class="flex gap-2 mb-4">
+      <button id="btn-start" class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
+        開始
+      </button>
+      <button id="btn-stop" class="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors hidden">
+        停止
+      </button>
+    </div>
+
+    <!-- 文字起こし結果 -->
+    <div class="flex-1 flex flex-col gap-3 overflow-hidden">
+      <!-- マイク（自分） -->
+      <div class="flex-1 flex flex-col min-h-0">
+        <div class="flex items-center gap-2 mb-1">
+          <div class="w-2 h-2 rounded-full bg-green-500" id="mic-indicator"></div>
+          <span class="text-sm font-medium text-green-400">自分</span>
+        </div>
+        <div id="mic-transcript" class="flex-1 overflow-y-auto bg-gray-800 rounded-lg p-3 text-sm leading-relaxed min-h-[100px]">
+          <span class="text-gray-500">マイクの文字起こしがここに表示されます</span>
+        </div>
+      </div>
+
+      <!-- タブ音声 -->
+      <div class="flex-1 flex flex-col min-h-0">
+        <div class="flex items-center gap-2 mb-1">
+          <div class="w-2 h-2 rounded-full bg-purple-500" id="tab-indicator"></div>
+          <span class="text-sm font-medium text-purple-400">タブ</span>
+        </div>
+        <div id="tab-transcript" class="flex-1 overflow-y-auto bg-gray-800 rounded-lg p-3 text-sm leading-relaxed min-h-[100px]">
+          <span class="text-gray-500">タブの文字起こしがここに表示されます</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- エクスポートボタン -->
+    <div class="flex gap-2 mt-4">
+      <button id="btn-copy" class="flex-1 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded text-sm transition-colors">
+        コピー
+      </button>
+      <button id="btn-download" class="flex-1 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded text-sm transition-colors">
+        ダウンロード
+      </button>
+    </div>
+  </div>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
