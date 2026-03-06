@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Voxi Browser</title>
+  <title>Voxi</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body class="w-[400px] min-h-[500px] bg-gray-900 text-gray-100">
   <div class="p-4 flex flex-col h-full">
     <!-- ヘッダー -->
     <header class="flex items-center justify-between mb-4">
-      <h1 class="text-lg font-bold text-white">Voxi Browser</h1>
+      <h1 class="text-lg font-bold text-white">Voxi</h1>
       <span id="status-badge" class="text-xs px-2 py-1 rounded-full bg-gray-700 text-gray-400">
         停止中
       </span>
@@ -34,9 +34,7 @@
           <div class="w-2 h-2 rounded-full bg-green-500" id="mic-indicator"></div>
           <span class="text-sm font-medium text-green-400">自分</span>
         </div>
-        <div id="mic-transcript" class="flex-1 overflow-y-auto bg-gray-800 rounded-lg p-3 text-sm leading-relaxed min-h-[100px]">
-          <span class="text-gray-500">マイクの文字起こしがここに表示されます</span>
-        </div>
+        <textarea id="mic-transcript" readonly class="flex-1 resize-none overflow-y-auto bg-gray-800 rounded-lg p-3 text-sm leading-relaxed min-h-[200px] text-gray-100 outline-none" placeholder="マイクの文字起こしがここに表示されます"></textarea>
       </div>
 
       <!-- タブ音声（非表示）
@@ -63,6 +61,12 @@
       <button id="btn-close" class="px-3 py-1.5 bg-red-800 hover:bg-red-700 text-red-200 rounded text-sm transition-colors">
         閉じる
       </button>
+    </div>
+
+    <!-- オプション -->
+    <div class="flex items-center gap-2 mt-2">
+      <input type="checkbox" id="chk-timestamp" class="w-4 h-4 accent-blue-500">
+      <label for="chk-timestamp" class="text-xs text-gray-400 cursor-pointer">時刻を付与する</label>
     </div>
   </div>
 

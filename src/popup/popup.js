@@ -10,6 +10,7 @@ const btnStop = document.getElementById('btn-stop');
 const btnCopy = document.getElementById('btn-copy');
 const btnDownload = document.getElementById('btn-download');
 const btnClose = document.getElementById('btn-close');
+const chkTimestamp = document.getElementById('chk-timestamp');
 const statusBadge = document.getElementById('status-badge');
 const micTranscript = document.getElementById('mic-transcript');
 const tabTranscript = document.getElementById('tab-transcript');
@@ -37,27 +38,27 @@ function setRecordingUI(recording) {
 /**
  * 文字起こしテキストを表示エリアに追加
  */
-function appendTranscript(source, text, timestamp) {
-  const time = new Date(timestamp).toLocaleTimeString('ja-JP');
-  const entry = { text, time };
-  transcripts[source].push(entry);
+function formatLine(entry) {
+  return chkTimestamp.checked ? `[${entry.time}] ${entry.text}\n` : `${entry.text}\n`;
+}
 
+function rerenderTranscript(source) {
   const container = source === 'mic' ? micTranscript : tabTranscript;
-
-  // 初回のプレースホルダーを削除
-  if (container.querySelector('.text-gray-500')) {
-    container.innerHTML = '';
-  }
-
-  const div = document.createElement('div');
-  div.className = 'mb-2';
-  div.innerHTML = `
-    <span class="text-gray-500 text-xs">${time}</span>
-    <span class="ml-1">${text}</span>
-  `;
-  container.appendChild(div);
+  if (!container) return;
+  container.value = transcripts[source].map(formatLine).join('');
   container.scrollTop = container.scrollHeight;
 }
+
+function appendTranscript(source, text, timestamp) {
+  const time = new Date(timestamp).toLocaleTimeString('ja-JP');
+  transcripts[source].push({ text, time });
+  rerenderTranscript(source);
+}
+
+chkTimestamp.addEventListener('change', () => {
+  rerenderTranscript('mic');
+  rerenderTranscript('tab');
+});
 
 /**
  * エクスポート用のテキストを生成
@@ -70,7 +71,8 @@ function buildExportText() {
   ].sort((a, b) => a.time.localeCompare(b.time));
 
   for (const entry of allEntries) {
-    lines.push(`[${entry.time}] ${entry.source}: ${entry.text}`);
+    const prefix = chkTimestamp.checked ? `[${entry.time}] ` : '';
+    lines.push(`${prefix}${entry.text}`);
   }
 
   return lines.join('\n');

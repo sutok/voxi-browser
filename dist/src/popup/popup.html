@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voxi</title>
+  <script type="module" crossorigin src="../../popup.js"></script>
+  <link rel="modulepreload" crossorigin href="../../chunks/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="stylesheet" crossorigin href="../../assets/popup.css">
+</head>
+<body class="w-[400px] min-h-[500px] bg-gray-900 text-gray-100">
+  <div class="p-4 flex flex-col h-full">
+    <!-- ヘッダー -->
+    <header class="flex items-center justify-between mb-4">
+      <h1 class="text-lg font-bold text-white">Voxi</h1>
+      <span id="status-badge" class="text-xs px-2 py-1 rounded-full bg-gray-700 text-gray-400">
+        停止中
+      </span>
+    </header>
+
+    <!-- 制御ボタン -->
+    <div class="flex gap-2 mb-4">
+      <button id="btn-start" class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
+        開始
+      </button>
+      <button id="btn-stop" class="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors hidden">
+        停止
+      </button>
+    </div>
+
+    <!-- 文字起こし結果 -->
+    <div class="flex-1 flex flex-col gap-3 overflow-hidden">
+      <!-- マイク（自分） -->
+      <div class="flex-1 flex flex-col min-h-0">
+        <div class="flex items-center gap-2 mb-1">
+          <div class="w-2 h-2 rounded-full bg-green-500" id="mic-indicator"></div>
+          <span class="text-sm font-medium text-green-400">自分</span>
+        </div>
+        <textarea id="mic-transcript" readonly class="flex-1 resize-none overflow-y-auto bg-gray-800 rounded-lg p-3 text-sm leading-relaxed min-h-[200px] text-gray-100 outline-none" placeholder="マイクの文字起こしがここに表示されます"></textarea>
+      </div>
+
+      <!-- タブ音声（非表示）
+      <div class="flex-1 flex flex-col min-h-0">
+        <div class="flex items-center gap-2 mb-1">
+          <div class="w-2 h-2 rounded-full bg-purple-500" id="tab-indicator"></div>
+          <span class="text-sm font-medium text-purple-400">タブ</span>
+        </div>
+        <div id="tab-transcript" class="flex-1 overflow-y-auto bg-gray-800 rounded-lg p-3 text-sm leading-relaxed min-h-[100px]">
+          <span class="text-gray-500">タブの文字起こしがここに表示されます</span>
+        </div>
+      </div>
+      -->
+    </div>
+
+    <!-- エクスポートボタン -->
+    <div class="flex gap-2 mt-4">
+      <button id="btn-copy" class="flex-1 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded text-sm transition-colors">
+        コピー
+      </button>
+      <button id="btn-download" class="flex-1 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded text-sm transition-colors">
+        ダウンロード
+      </button>
+      <button id="btn-close" class="px-3 py-1.5 bg-red-800 hover:bg-red-700 text-red-200 rounded text-sm transition-colors">
+        閉じる
+      </button>
+    </div>
+
+    <!-- オプション -->
+    <div class="flex items-center gap-2 mt-2">
+      <input type="checkbox" id="chk-timestamp" class="w-4 h-4 accent-blue-500">
+      <label for="chk-timestamp" class="text-xs text-gray-400 cursor-pointer">時刻を付与する</label>
+    </div>
+  </div>
+
+</body>
+</html>

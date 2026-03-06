@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Voxi Browser",
+  "name": "Voxi",
   "version": "0.1.0",
   "description": "リアルタイム音声文字起こし Chrome 拡張機能（日本語対応）",
   "permissions": [
@@ -12,7 +12,7 @@
     "type": "module"
   },
   "action": {
-    "default_title": "Voxi Browser"
+    "default_title": "Voxi"
   },
   "web_accessible_resources": [
     {
