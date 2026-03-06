@@ -10,9 +10,6 @@ const btnStop = document.getElementById('btn-stop');
 const btnCopy = document.getElementById('btn-copy');
 const btnDownload = document.getElementById('btn-download');
 const statusBadge = document.getElementById('status-badge');
-const loadingSection = document.getElementById('loading-section');
-const loadingBar = document.getElementById('loading-bar');
-const loadingText = document.getElementById('loading-text');
 const micTranscript = document.getElementById('mic-transcript');
 const tabTranscript = document.getElementById('tab-transcript');
 const micIndicator = document.getElementById('mic-indicator');
@@ -121,16 +118,6 @@ chrome.runtime.onMessage.addListener((message) => {
   switch (message.type) {
     case 'transcription':
       appendTranscript(message.source, message.text, message.timestamp);
-      break;
-
-    case 'loading':
-      loadingSection.classList.remove('hidden');
-      loadingBar.style.width = `${message.progress}%`;
-      loadingText.textContent = `${Math.round(message.progress)}%`;
-      break;
-
-    case 'ready':
-      loadingSection.classList.add('hidden');
       break;
 
     case 'mic-started':

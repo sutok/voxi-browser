@@ -2,10 +2,10 @@
   "manifest_version": 3,
   "name": "Voxi Browser",
   "version": "0.1.0",
-  "description": "リアルタイム音声文字起こし Chrome 拡張機能（オフライン・日本語対応）",
+  "description": "リアルタイム音声文字起こし Chrome 拡張機能（日本語対応）",
   "permissions": [
-    "tabCapture",
-    "offscreen"
+    "scripting",
+    "activeTab"
   ],
   "background": {
     "service_worker": "service-worker.js",
@@ -17,13 +17,9 @@
   },
   "web_accessible_resources": [
     {
-      "resources": [
-        "whisper-worker.js",
-        "audio-processor.js",
-        "chunks/*",
-        "assets/*"
-      ],
+      "resources": ["chunks/*", "assets/*"],
       "matches": ["<all_urls>"]
     }
-  ]
+  ],
+  "content_scripts": []
 }

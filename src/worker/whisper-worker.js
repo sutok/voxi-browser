@@ -23,6 +23,15 @@ async function loadModel() {
     // ブラウザ環境ではローカルモデルを使わない
     env.allowLocalModels = false;
 
+    // ONNX Runtime WASM ファイルをローカルから読み込む（CSP 対策）
+    const wasmBase = typeof chrome !== 'undefined' && chrome.runtime?.getURL
+      ? chrome.runtime.getURL('wasm/')
+      : '/node_modules/onnxruntime-web/dist/';
+    env.backends.onnx.wasm.wasmPaths = wasmBase;
+
+    // SharedArrayBuffer が使えない環境（拡張機能の Offscreen 等）ではスレッドを無効化
+    env.backends.onnx.wasm.numThreads = 1;
+
     self.postMessage({ type: 'loading', progress: 0 });
 
     pipeline = await createPipeline(
@@ -34,8 +43,9 @@ async function loadModel() {
         progress_callback: (progress) => {
           self.postMessage({
             type: 'loading',
-            progress: progress.progress || 0,
+            progress: progress.progress ?? 0,
             status: progress.status,
+            file: progress.file,
           });
         },
       }

@@ -1,161 +1,66 @@
 /**
  * Offscreen Document
- * MV3 では Service Worker で AudioContext が使えないため、
- * ここで音声キャプチャと Whisper Worker への橋渡しを行う。
- *
- * - マイク: getUserMedia()
- * - タブ音声: Service Worker から受け取った streamId で getDisplayMedia()
+ * Web Speech API (webkitSpeechRecognition) でマイク音声をリアルタイム文字起こし。
  */
 
-let micContext = null;
-let tabContext = null;
-let whisperWorker = null;
+let recognition = null;
 
-/**
- * Whisper Worker を初期化
- */
-function initWhisperWorker() {
-  whisperWorker = new Worker(
-    chrome.runtime.getURL('whisper-worker.js'),
-    { type: 'module' }
-  );
-
-  whisperWorker.addEventListener('message', (event) => {
-    // Worker からの結果を Service Worker にリレー
-    chrome.runtime.sendMessage({
-      target: 'service-worker',
-      ...event.data,
-    });
-  });
-
-  // モデルのロードを開始
-  whisperWorker.postMessage({ type: 'load' });
+function send(msg) {
+  chrome.runtime.sendMessage({ target: 'service-worker', ...msg });
 }
 
-/**
- * AudioContext + AudioWorklet をセットアップし、
- * 音声ストリームから 16kHz チャンクを生成する
- */
-async function setupAudioPipeline(stream, source) {
-  const context = new AudioContext({ sampleRate: 44100 });
+function startRecognition() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    send({ type: 'error', error: 'このブラウザは SpeechRecognition に対応していません' });
+    return;
+  }
 
-  await context.audioWorklet.addModule(
-    chrome.runtime.getURL('audio-processor.js')
-  );
+  recognition = new SR();
+  recognition.lang = 'ja-JP';
+  recognition.continuous = true;
+  recognition.interimResults = false;
 
-  const sourceNode = context.createMediaStreamSource(stream);
+  recognition.onstart = () => {
+    send({ type: 'mic-started' });
+    send({ type: 'ready' });
+  };
 
-  const workletNode = new AudioWorkletNode(context, 'audio-processor', {
-    processorOptions: {
-      bufferSize: 16000 * 5, // 5秒
-      sampleRate: 16000,
-    },
-  });
-
-  workletNode.port.onmessage = (event) => {
-    if (event.data.type === 'audio-chunk' && whisperWorker) {
-      whisperWorker.postMessage({
-        type: 'transcribe',
-        audio: event.data.audio,
-        source,
-      });
+  recognition.onresult = (event) => {
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      if (event.results[i].isFinal) {
+        const text = event.results[i][0].transcript.trim();
+        if (text) {
+          send({ type: 'transcription', text, source: 'mic', timestamp: Date.now() });
+        }
+      }
     }
   };
 
-  sourceNode.connect(workletNode);
+  recognition.onerror = (event) => {
+    // network エラーは一時的なものなので再起動で対処
+    if (event.error === 'network' || event.error === 'no-speech') return;
+    send({ type: 'error', error: `音声認識エラー: ${event.error}` });
+  };
 
-  // タブ音声の場合、音声をそのまま出力にも接続して聞こえるようにする
-  if (source === 'tab') {
-    const destination = context.createMediaStreamDestination();
-    sourceNode.connect(destination);
-    // Audio 要素で再生してミュート問題を回避
-    const audio = new Audio();
-    audio.srcObject = destination.stream;
-    audio.play();
-  }
+  recognition.onend = () => {
+    // 停止していなければ自動再起動（途切れ対策）
+    if (recognition) recognition.start();
+  };
 
-  return context;
+  recognition.start();
 }
 
-/**
- * マイクキャプチャを開始
- */
-async function startMicCapture() {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    micContext = await setupAudioPipeline(stream, 'mic');
-    chrome.runtime.sendMessage({
-      target: 'service-worker',
-      type: 'mic-started',
-    });
-  } catch (error) {
-    chrome.runtime.sendMessage({
-      target: 'service-worker',
-      type: 'error',
-      error: `マイクの取得に失敗: ${error.message}`,
-    });
+function stopRecognition() {
+  if (recognition) {
+    recognition.onend = null; // 自動再起動を無効化
+    recognition.stop();
+    recognition = null;
   }
 }
 
-/**
- * タブ音声キャプチャを開始
- */
-async function startTabCapture(streamId) {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        mandatory: {
-          chromeMediaSource: 'tab',
-          chromeMediaSourceId: streamId,
-        },
-      },
-    });
-    tabContext = await setupAudioPipeline(stream, 'tab');
-    chrome.runtime.sendMessage({
-      target: 'service-worker',
-      type: 'tab-started',
-    });
-  } catch (error) {
-    chrome.runtime.sendMessage({
-      target: 'service-worker',
-      type: 'error',
-      error: `タブ音声の取得に失敗: ${error.message}`,
-    });
-  }
-}
-
-/**
- * すべてのキャプチャを停止
- */
-function stopAll() {
-  if (micContext) {
-    micContext.close();
-    micContext = null;
-  }
-  if (tabContext) {
-    tabContext.close();
-    tabContext = null;
-  }
-  if (whisperWorker) {
-    whisperWorker.terminate();
-    whisperWorker = null;
-  }
-}
-
-// Service Worker からのメッセージを受信
 chrome.runtime.onMessage.addListener((message) => {
   if (message.target !== 'offscreen') return;
-
-  switch (message.type) {
-    case 'start':
-      initWhisperWorker();
-      startMicCapture();
-      if (message.streamId) {
-        startTabCapture(message.streamId);
-      }
-      break;
-    case 'stop':
-      stopAll();
-      break;
-  }
+  if (message.type === 'start') startRecognition();
+  if (message.type === 'stop') stopRecognition();
 });

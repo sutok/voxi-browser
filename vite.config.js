@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 import tailwindcss from '@tailwindcss/vite';
 import { resolve } from 'path';
-import { copyFileSync, mkdirSync } from 'fs';
+import { copyFileSync, mkdirSync, readdirSync } from 'fs';
 
 export default defineConfig({
   plugins: [
@@ -14,6 +14,16 @@ export default defineConfig({
           resolve(__dirname, 'manifest.json'),
           resolve(__dirname, 'dist/manifest.json')
         );
+
+        // ONNX Runtime WASM ファイルを dist/wasm/ にコピー（CSP 対策）
+        const wasmSrc = resolve(__dirname, 'node_modules/onnxruntime-web/dist');
+        const wasmDest = resolve(__dirname, 'dist/wasm');
+        mkdirSync(wasmDest, { recursive: true });
+        for (const file of readdirSync(wasmSrc)) {
+          if (file.endsWith('.wasm') || file.endsWith('.mjs') || file.endsWith('.js')) {
+            copyFileSync(resolve(wasmSrc, file), resolve(wasmDest, file));
+          }
+        }
       },
     },
   ],
@@ -25,13 +35,13 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
     target: 'esnext',
+    chunkSizeWarningLimit: 10000, // Transformers.js は大きいため警告リミットを引き上げ
     rollupOptions: {
       input: {
         popup: resolve(__dirname, 'src/popup/popup.html'),
-        offscreen: resolve(__dirname, 'src/offscreen/offscreen.html'),
+        debug: resolve(__dirname, 'src/debug/debug.html'),
         'service-worker': resolve(__dirname, 'src/background/service-worker.js'),
-        'whisper-worker': resolve(__dirname, 'src/worker/whisper-worker.js'),
-        'audio-processor': resolve(__dirname, 'src/audio/audio-processor.js'),
+        'content': resolve(__dirname, 'src/content/content.js'),
       },
       output: {
         entryFileNames: '[name].js',
