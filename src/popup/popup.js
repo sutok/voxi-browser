@@ -9,6 +9,7 @@ const btnStart = document.getElementById('btn-start');
 const btnStop = document.getElementById('btn-stop');
 const btnCopy = document.getElementById('btn-copy');
 const btnDownload = document.getElementById('btn-download');
+const btnClose = document.getElementById('btn-close');
 const statusBadge = document.getElementById('status-badge');
 const micTranscript = document.getElementById('mic-transcript');
 const tabTranscript = document.getElementById('tab-transcript');
@@ -87,8 +88,18 @@ btnStop.addEventListener('click', () => {
   setRecordingUI(false);
 });
 
+function stopIfRecording() {
+  chrome.runtime.sendMessage({ target: 'service-worker', type: 'get-status' }, (res) => {
+    if (res?.isRecording) {
+      chrome.runtime.sendMessage({ target: 'service-worker', type: 'stop' });
+      setRecordingUI(false);
+    }
+  });
+}
+
 // クリップボードにコピー
 btnCopy.addEventListener('click', async () => {
+  stopIfRecording();
   const text = buildExportText();
   if (!text) return;
   await navigator.clipboard.writeText(text);
@@ -100,6 +111,7 @@ btnCopy.addEventListener('click', async () => {
 
 // .txt ダウンロード
 btnDownload.addEventListener('click', () => {
+  stopIfRecording();
   const text = buildExportText();
   if (!text) return;
   const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
@@ -109,6 +121,12 @@ btnDownload.addEventListener('click', () => {
   a.download = `voxi-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.txt`;
   a.click();
   URL.revokeObjectURL(url);
+});
+
+// 閉じるボタン
+btnClose.addEventListener('click', () => {
+  stopIfRecording();
+  window.close();
 });
 
 // Service Worker / Offscreen からのメッセージ受信
@@ -125,7 +143,7 @@ chrome.runtime.onMessage.addListener((message) => {
       break;
 
     case 'tab-started':
-      tabIndicator.classList.add('animate-pulse');
+      tabIndicator?.classList.add('animate-pulse');
       break;
 
     case 'error':

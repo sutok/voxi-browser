@@ -7,6 +7,35 @@
 let isRecording = false;
 let activeTabId = null;
 let injectedTabIds = new Set();
+let popupWindowId = null;
+let targetTabId = null; // ポップアップを開く前のアクティブタブを記憶
+
+// 拡張アイコンクリックでパネルウィンドウを開く（既に開いていればフォーカス）
+chrome.action.onClicked.addListener(async (tab) => {
+  // クリック時のタブを記憶（ポップアップウィンドウ内のタブと混同しないよう先に取得）
+  targetTabId = tab.id;
+
+  if (popupWindowId != null) {
+    try {
+      await chrome.windows.update(popupWindowId, { focused: true });
+      return;
+    } catch {
+      popupWindowId = null;
+    }
+  }
+  const win = await chrome.windows.create({
+    url: chrome.runtime.getURL('src/popup/popup.html'),
+    type: 'popup',
+    width: 420,
+    height: 560,
+  });
+  popupWindowId = win.id;
+});
+
+// ウィンドウが閉じられたら ID をリセット
+chrome.windows.onRemoved.addListener((windowId) => {
+  if (windowId === popupWindowId) popupWindowId = null;
+});
 
 async function startTranscription(tab) {
   if (isRecording) return;
@@ -53,9 +82,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.target === 'service-worker') {
     switch (message.type) {
       case 'start':
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-          if (tabs[0]) startTranscription(tabs[0]);
-        });
+        if (targetTabId != null) {
+          chrome.tabs.get(targetTabId, (tab) => {
+            if (tab) startTranscription(tab);
+          });
+        }
         break;
       case 'stop':
         stopTranscription();
