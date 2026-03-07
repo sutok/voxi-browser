@@ -37,7 +37,7 @@ chrome.windows.onRemoved.addListener((windowId) => {
   if (windowId === popupWindowId) popupWindowId = null;
 });
 
-async function startTranscription(tab) {
+async function startTranscription(tab, language = '') {
   if (isRecording) return;
   isRecording = true;
   activeTabId = tab.id;
@@ -49,10 +49,9 @@ async function startTranscription(tab) {
         files: ['content.js'],
       });
       injectedTabIds.add(tab.id);
-    } else {
-      // 既に注入済みなら start メッセージだけ送る
-      chrome.tabs.sendMessage(tab.id, { target: 'content', type: 'start' });
     }
+    // 注入済み・新規いずれも start メッセージで言語を渡す
+    chrome.tabs.sendMessage(tab.id, { target: 'content', type: 'start', language });
   } catch (err) {
     isRecording = false;
     activeTabId = null;
@@ -84,7 +83,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       case 'start':
         if (targetTabId != null) {
           chrome.tabs.get(targetTabId, (tab) => {
-            if (tab) startTranscription(tab);
+            if (tab) startTranscription(tab, message.language ?? '');
           });
         }
         break;

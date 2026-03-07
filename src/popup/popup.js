@@ -11,11 +11,22 @@ const btnCopy = document.getElementById('btn-copy');
 const btnDownload = document.getElementById('btn-download');
 const btnClose = document.getElementById('btn-close');
 const chkTimestamp = document.getElementById('chk-timestamp');
+const selectLang = document.getElementById('select-lang');
 const statusBadge = document.getElementById('status-badge');
 const micTranscript = document.getElementById('mic-transcript');
 const tabTranscript = document.getElementById('tab-transcript');
 const micIndicator = document.getElementById('mic-indicator');
 const tabIndicator = document.getElementById('tab-indicator');
+
+// 保存済みの言語設定を復元
+chrome.storage.local.get('language', (r) => {
+  if (r.language !== undefined) selectLang.value = r.language;
+});
+
+// 変更時に保存
+selectLang.addEventListener('change', () => {
+  chrome.storage.local.set({ language: selectLang.value });
+});
 
 // 文字起こしデータ
 const transcripts = {
@@ -29,6 +40,7 @@ const transcripts = {
 function setRecordingUI(recording) {
   btnStart.classList.toggle('hidden', recording);
   btnStop.classList.toggle('hidden', !recording);
+  selectLang.disabled = recording;
   statusBadge.textContent = recording ? '録音中' : '停止中';
   statusBadge.className = recording
     ? 'text-xs px-2 py-1 rounded-full bg-red-900 text-red-300 animate-pulse'
@@ -80,7 +92,7 @@ function buildExportText() {
 
 // 開始ボタン
 btnStart.addEventListener('click', () => {
-  chrome.runtime.sendMessage({ target: 'service-worker', type: 'start' });
+  chrome.runtime.sendMessage({ target: 'service-worker', type: 'start', language: selectLang.value });
   setRecordingUI(true);
 });
 

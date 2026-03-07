@@ -12,7 +12,7 @@ window.__voxiInjected = true;
 
 let recognition = null;
 
-async function startRecognition() {
+async function startRecognition(language = '') {
   if (recognition) return;
 
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -39,7 +39,7 @@ async function startRecognition() {
   }
 
   recognition = new SR();
-  recognition.lang = 'ja-JP';
+  recognition.lang = language; // '' のとき Web Speech API がブラウザ言語で自動認識
   recognition.continuous = true;
   recognition.interimResults = false;
 
@@ -92,9 +92,6 @@ function stopRecognition() {
 // Service Worker からの制御メッセージ
 chrome.runtime.onMessage.addListener((message) => {
   if (message.target !== 'content') return;
-  if (message.type === 'start') startRecognition();
+  if (message.type === 'start') startRecognition(message.language ?? '');
   if (message.type === 'stop') stopRecognition();
 });
-
-// 注入直後に自動開始
-startRecognition();
