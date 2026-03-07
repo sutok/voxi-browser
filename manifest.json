@@ -12,8 +12,20 @@
     "service_worker": "service-worker.js",
     "type": "module"
   },
+  "icons": {
+    "16": "icons/icon_128.png",
+    "32": "icons/icon_128.png",
+    "48": "icons/icon_128.png",
+    "128": "icons/icon_128.png"
+  },
   "action": {
-    "default_title": "Voxi"
+    "default_title": "Voxi",
+    "default_icon": {
+      "16": "icons/icon_128.png",
+      "32": "icons/icon_128.png",
+      "48": "icons/icon_128.png",
+      "128": "icons/icon_128.png"
+    }
   },
   "web_accessible_resources": [
     {

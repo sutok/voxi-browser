@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 import tailwindcss from '@tailwindcss/vite';
 import { resolve } from 'path';
-import { copyFileSync, mkdirSync, readdirSync } from 'fs';
+import { copyFileSync, mkdirSync, readdirSync, existsSync } from 'fs';
 
 export default defineConfig({
   plugins: [
@@ -14,6 +14,18 @@ export default defineConfig({
           resolve(__dirname, 'manifest.json'),
           resolve(__dirname, 'dist/manifest.json')
         );
+
+        // icons/ を dist/icons/ にコピー
+        const iconsSrc = resolve(__dirname, 'icons');
+        const iconsDest = resolve(__dirname, 'dist/icons');
+        mkdirSync(iconsDest, { recursive: true });
+        if (existsSync(iconsSrc)) {
+          for (const file of readdirSync(iconsSrc)) {
+            if (file.endsWith('.png')) {
+              copyFileSync(resolve(iconsSrc, file), resolve(iconsDest, file));
+            }
+          }
+        }
 
         // ONNX Runtime WASM ファイルを dist/wasm/ にコピー（CSP 対策）
         const wasmSrc = resolve(__dirname, 'node_modules/onnxruntime-web/dist');
